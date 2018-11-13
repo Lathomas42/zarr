@@ -730,6 +730,10 @@ class DirectoryStore(MutableMapping):
 
         self.path = path
 
+        # cache umask
+        self.umask = os.umask(0)
+        os.umask(self.umask)
+
     def __getitem__(self, key):
         filepath = os.path.join(self.path, key)
         if os.path.isfile(filepath):
@@ -774,6 +778,9 @@ class DirectoryStore(MutableMapping):
             if os.path.exists(file_path):
                 os.remove(file_path)
             os.rename(temp_path, file_path)
+
+            # change permissions of file in accordance with umask
+            os.chmod(file_path, 0o666 & ~self.umask)
 
         finally:
             # clean up if temp file still exists for whatever reason
